@@ -544,9 +544,16 @@ class HNSWDatabase:
 
         self._dimension = dim
 
-        # Auto-save if we have a save path
+        # Auto-save in place if this index is backed by a file.
+        # (save() would pick a new unique filename because the file exists,
+        #  so write directly to the existing path instead.)
         if self._save_path:
-            self.save(self._save_path)
+            result = lib.hnsw_save(self._index, self._save_path.encode('utf-8'))
+            if result != 0:
+                raise FileIOError(
+                    f"Failed to auto-save to {self._save_path} (error code: {result})"
+                )
+            self._is_saved = True
 
         return self
 
